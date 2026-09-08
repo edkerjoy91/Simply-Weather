@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f3f0e8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Weather" />
+  <title>Weather</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynA1GfU5g40A6MKpZ3w0Rtw+u3xE=" crossorigin=""/>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section id="weatherView" class="view active">
+      <header class="topbar">
+        <button id="locationButton" class="icon-button" aria-label="Use current location">◎</button>
+        <div class="location-block">
+          <div id="locationName" class="eyebrow">GENOVA</div>
+          <div id="updatedText" class="micro">Updating…</div>
+        </div>
+        <button id="refreshButton" class="icon-button" aria-label="Refresh weather">↻</button>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div id="currentTemp" class="temperature">--°</div>
+          <div id="conditionText" class="condition">Loading weather</div>
+          <div id="feelsLike" class="subtle">Feels like --°</div>
+        </div>
+        <div id="weatherGlyph" class="weather-glyph" aria-hidden="true">◯</div>
+      </section>
+
+      <section class="confidence-strip">
+        <div>
+          <div class="eyebrow">CONSENSUS</div>
+          <div id="confidenceText" class="confidence-value">Calculating…</div>
+        </div>
+        <button id="modelDetailsButton" class="text-button">Models</button>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <span class="eyebrow">NEXT 24 HOURS</span>
+          <span id="rainHeadline" class="micro"></span>
+        </div>
+        <div id="hourlyScroller" class="hourly-scroller"></div>
+      </section>
+
+      <section class="metrics-grid">
+        <article class="metric-card"><span class="eyebrow">RAIN</span><strong id="rainMetric">--</strong><span class="micro">next hour</span></article>
+        <article class="metric-card"><span class="eyebrow">HUMIDITY</span><strong id="humidityMetric">--</strong><span class="micro">relative</span></article>
+        <article class="metric-card"><span class="eyebrow">WIND</span><strong id="windMetric">--</strong><span id="windDirection" class="micro">--</span></article>
+        <article class="metric-card"><span class="eyebrow">UV</span><strong id="uvMetric">--</strong><span class="micro">index</span></article>
+      </section>
+
+      <section>
+        <div class="section-head"><span class="eyebrow">7 DAY OUTLOOK</span></div>
+        <div id="dailyList" class="daily-list"></div>
+      </section>
+
+      <section class="sun-card">
+        <div><span class="eyebrow">SUNRISE</span><strong id="sunriseText">--:--</strong></div>
+        <div class="sun-line"><span></span></div>
+        <div><span class="eyebrow">SUNSET</span><strong id="sunsetText">--:--</strong></div>
+      </section>
+
+      <footer class="source-note">Forecast data: Open‑Meteo. Consensus uses available ECMWF, DWD ICON, GFS and ItaliaMeteo model feeds.</footer>
+    </section>
+
+    <section id="mapView" class="view">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">PRECIPITATION</div>
+          <div class="map-title">Radar</div>
+        </div>
+        <button id="mapLocateButton" class="icon-button">◎</button>
+      </header>
+      <div id="map" class="map"></div>
+      <section class="radar-control">
+        <div class="radar-label-row"><span id="radarTimeLabel">Radar</span><span class="micro">RADAR ← NOW → FORECAST</span></div>
+        <input id="radarSlider" type="range" min="0" max="0" value="0" step="1" />
+        <div class="radar-actions">
+          <button id="radarPlayButton" class="pill-button">Play</button>
+          <span class="micro">Past 2 hours of observed radar</span>
+        </div>
+        <div class="radar-label-row forecast-head"><span class="eyebrow">AFTER NOW · MODEL CONSENSUS</span><span class="micro">forecast precipitation</span></div>
+        <div id="mapForecastStrip" class="map-forecast-strip"></div>
+      </section>
+      <footer class="source-note">Radar: RainViewer. Base map © OpenStreetMap contributors.</footer>
+    </section>
+
+    <section id="locationsView" class="view">
+      <header class="topbar"><div><div class="eyebrow">PLACES</div><div class="map-title">Locations</div></div></header>
+      <form id="locationSearchForm" class="search-row">
+        <input id="locationSearchInput" placeholder="Search city" autocomplete="off" />
+        <button class="pill-button" type="submit">Search</button>
+      </form>
+      <div id="searchResults" class="search-results"></div>
+      <div id="savedLocations" class="saved-locations"></div>
+    </section>
+
+    <section id="settingsView" class="view">
+      <header class="topbar"><div><div class="eyebrow">PREFERENCES</div><div class="map-title">Settings</div></div></header>
+      <div class="settings-card">
+        <label class="setting-row"><span>Temperature</span><select id="unitSelect"><option value="celsius">Celsius</option><option value="fahrenheit">Fahrenheit</option></select></label>
+        <label class="setting-row"><span>Wind speed</span><select id="windSelect"><option value="kmh">km/h</option><option value="ms">m/s</option><option value="mph">mph</option></select></label>
+      </div>
+      <div class="settings-card">
+        <div class="eyebrow">ABOUT THE CONSENSUS</div>
+        <p class="settings-copy">The displayed forecast is the mean of all available model feeds at each hour. Confidence is based on model spread: tighter agreement means higher confidence. Rain agreement is shown separately because model precipitation outputs should not be treated as identical probabilities.</p>
+      </div>
+    </section>
+
+    <nav class="tabbar" aria-label="Main navigation">
+      <button class="tab active" data-view="weatherView"><span>☀︎</span><small>Weather</small></button>
+      <button class="tab" data-view="mapView"><span>⌖</span><small>Map</small></button>
+      <button class="tab" data-view="locationsView"><span>＋</span><small>Locations</small></button>
+      <button class="tab" data-view="settingsView"><span>⋯</span><small>Settings</small></button>
+    </nav>
+  </main>
+
+  <dialog id="modelDialog" class="model-dialog">
+    <button id="closeModelDialog" class="dialog-close">×</button>
+    <div class="eyebrow">MODEL CONSENSUS</div>
+    <h2>Forecast inputs</h2>
+    <div id="modelRows"></div>
+    <p class="micro">Models can update at different times, so a temporarily unavailable source is excluded rather than treated as zero.</p>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
