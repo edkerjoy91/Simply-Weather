@@ -3,3 +3,15 @@
 @media (max-width:390px){.temperature{font-size:70px}.weather-glyph{font-size:66px}.app-shell{padding-left:16px;padding-right:16px}.hourly-scroller{margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}}
 
 .forecast-head{margin-top:18px}.map-forecast-strip{display:flex;gap:7px;overflow-x:auto;padding:8px 0}.forecast-chip{min-width:82px;border:1px solid var(--line);border-radius:12px;padding:9px;display:flex;flex-direction:column;gap:4px}.forecast-chip span,.forecast-chip small{font-size:10px;color:var(--muted)}.forecast-chip strong{font-size:14px}
+
+/* Critical Leaflet layout rules kept locally so the radar map still lays out correctly
+   if the CDN stylesheet is delayed or blocked in iOS standalone mode. */
+.leaflet-container{overflow:hidden;position:relative;outline:0;-webkit-tap-highlight-color:transparent;background:#dedbd2}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container .leaflet-pane{z-index:400}.leaflet-container .leaflet-tile-pane{z-index:200}.leaflet-container .leaflet-overlay-pane{z-index:400}.leaflet-container .leaflet-shadow-pane{z-index:500}.leaflet-container .leaflet-marker-pane{z-index:600}.leaflet-container .leaflet-tooltip-pane{z-index:650}.leaflet-container .leaflet-popup-pane{z-index:700}
+.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}.leaflet-zoom-animated{transform-origin:0 0}.leaflet-map-pane svg{max-width:none!important;max-height:none!important}.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important;width:256px!important;height:256px!important;padding:0}
+.leaflet-container img,.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img{max-width:none!important}
+.metric-button{width:100%;border:0;text-align:left;color:inherit;font:inherit;cursor:pointer}.metric-button:active{transform:scale(.99)}
+.rain-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px}.rain-summary>div{background:var(--panel);border-radius:12px;padding:12px}.rain-summary strong{display:block;font-size:19px;margin-top:4px}.rain-model-amount{font-variant-numeric:tabular-nums}.model-wet{font-size:10px;letter-spacing:.1em;color:var(--muted);margin-top:2px}.forecast-chip{cursor:pointer}.forecast-chip small{line-height:1.25}
+.dialog-section-label{margin-top:22px;padding:10px 0 6px;border-bottom:1px solid rgba(20,20,20,.12)}
+.probability-foot{margin-top:14px;line-height:1.45}

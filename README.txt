@@ -17,3 +17,6 @@ Notes:
 - ItaliaMeteo ICON-2I is regional and short-range, so it naturally drops out beyond its horizon.
 - Future precipitation on the Map screen is a model-consensus strip, not future radar.
 - Geolocation requires HTTPS (or localhost).
+
+
+V3: Precipitation probability is now ensemble-based, using DWD ICON-EPS, NOAA GEFS, and CMC GEPS via Open-Meteo. The displayed PoP is the mean of available ensemble-system probabilities for >0.1 mm/hour. Deterministic ECMWF/DWD/GFS/ItaliaMeteo precipitation amounts remain visible separately.

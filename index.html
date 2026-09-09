@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynA1GfU5g40A6MKpZ3w0Rtw+u3xE=" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -54,7 +54,7 @@
       </section>
 
       <section class="metrics-grid">
-        <article class="metric-card"><span class="eyebrow">RAIN</span><strong id="rainMetric">--</strong><span class="micro">next hour</span></article>
+        <button id="rainDetailsButton" class="metric-card metric-button"><span class="eyebrow">PRECIPITATION</span><strong id="rainMetric">--</strong><span id="rainSubtext" class="micro">ensemble probability</span></button>
         <article class="metric-card"><span class="eyebrow">HUMIDITY</span><strong id="humidityMetric">--</strong><span class="micro">relative</span></article>
         <article class="metric-card"><span class="eyebrow">WIND</span><strong id="windMetric">--</strong><span id="windDirection" class="micro">--</span></article>
         <article class="metric-card"><span class="eyebrow">UV</span><strong id="uvMetric">--</strong><span class="micro">index</span></article>
@@ -71,7 +71,7 @@
         <div><span class="eyebrow">SUNSET</span><strong id="sunsetText">--:--</strong></div>
       </section>
 
-      <footer class="source-note">Forecast data: Open‑Meteo. Consensus uses available ECMWF, DWD ICON, GFS and ItaliaMeteo model feeds.</footer>
+      <footer class="source-note">Forecast data: Open‑Meteo. Temperature and precipitation amounts use ECMWF, DWD ICON, GFS and ItaliaMeteo; precipitation probability uses independent DWD ICON‑EPS, NOAA GEFS and CMC GEPS ensembles.</footer>
     </section>
 
     <section id="mapView" class="view">
@@ -93,7 +93,7 @@
         <div class="radar-label-row forecast-head"><span class="eyebrow">AFTER NOW · MODEL CONSENSUS</span><span class="micro">forecast precipitation</span></div>
         <div id="mapForecastStrip" class="map-forecast-strip"></div>
       </section>
-      <footer class="source-note">Radar: RainViewer. Base map © OpenStreetMap contributors.</footer>
+      <footer class="source-note">Observed radar: RainViewer. Forecast precipitation: multi-model deterministic amounts plus DWD ICON‑EPS, NOAA GEFS and CMC GEPS ensemble probability via Open‑Meteo. Base map © OpenStreetMap contributors.</footer>
     </section>
 
     <section id="locationsView" class="view">
@@ -114,7 +114,7 @@
       </div>
       <div class="settings-card">
         <div class="eyebrow">ABOUT THE CONSENSUS</div>
-        <p class="settings-copy">The displayed forecast is the mean of all available model feeds at each hour. Confidence is based on model spread: tighter agreement means higher confidence. Rain agreement is shown separately because model precipitation outputs should not be treated as identical probabilities.</p>
+        <p class="settings-copy">The displayed temperature forecast is the mean of the available deterministic models. Temperature confidence is based on model spread. Precipitation probability is calculated separately from independent ensemble systems: DWD ICON‑EPS, NOAA GEFS and CMC GEPS. Each probability is the share of ensemble members forecasting more than 0.1 mm in the hour, and the app shows their consensus rather than treating deterministic model agreement as probability.</p>
       </div>
     </section>
 
@@ -134,7 +134,17 @@
     <p class="micro">Models can update at different times, so a temporarily unavailable source is excluded rather than treated as zero.</p>
   </dialog>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <dialog id="rainDialog" class="model-dialog">
+    <button id="closeRainDialog" class="dialog-close">×</button>
+    <div class="eyebrow">PRECIPITATION PROBABILITY</div>
+    <h2 id="rainDialogTitle">Next hour</h2>
+    <div id="rainConsensusSummary" class="rain-summary"></div>
+    <div id="rainModelRows"></div>
+    <p class="micro">Probability of precipitation (PoP) is ensemble-based: the percentage of members forecasting more than 0.1 mm during that hour. The app combines several ensemble systems and separately shows deterministic precipitation amounts.</p>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" ></script>
   <script src="app.js"></script>
 </body>
 </html>
