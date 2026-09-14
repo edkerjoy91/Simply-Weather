@@ -44,3 +44,30 @@
 .current-icon .wx-svg,.hero-icon .wx-svg{width:82px;height:82px}
 .favorite-star.is-saved{font-variation-settings:"FILL" 1; background:var(--ink); color:var(--paper); border-color:var(--ink)}
 .favorite-star{transition:background .12s ease,color .12s ease,border-color .12s ease}
+
+/* v6 definitive weather icons — no unicode/pie-chart glyphs */
+.wx-svg{
+  display:block;
+  width:100%;
+  height:100%;
+  color:currentColor;
+}
+.weather-glyph{
+  width:88px;
+  height:88px;
+}
+.hour-icon{
+  width:32px;
+  height:32px;
+  margin-inline:auto;
+}
+.daily-icon{
+  width:52px;
+  height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.daily-icon .wx-svg{width:52px;height:52px}
+.hour-icon .wx-svg{width:32px;height:32px}
+.weather-glyph .wx-svg{width:88px;height:88px}

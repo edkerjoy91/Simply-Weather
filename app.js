@@ -26,7 +26,50 @@ const round = (v,d=0) => v == null || Number.isNaN(v) ? null : Number(v.toFixed(
 const fmtTemp = v => v == null ? '--' : `${Math.round(v)}°`;
 const degreeToCardinal = deg => ['N','NE','E','SE','S','SW','W','NW'][Math.round((deg%360)/45)%8];
 const weatherText = code => ({0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Severe thunderstorm'})[code] || 'Variable weather';
-const weatherGlyph = code => code===0?'☀︎':[1,2].includes(code)?'◔':[3,45,48].includes(code)?'☁︎':[51,53,55,61,63,65,80,81,82].includes(code)?'☂︎':[71,73,75].includes(code)?'❄︎':[95,96,99].includes(code)?'ϟ':'◯';
+
+function isNightTime(ts){
+  try{
+    const d = new Date(ts);
+    const h = d.getHours();
+    return h < 7 || h >= 20;
+  }catch(e){ return false; }
+}
+
+function weatherGlyph(code, isNight=false){
+  const c = Number(code);
+  const cloud = `<path d="M13 34h27c7 0 12-5 12-11 0-6-4-10-10-11C40 7 35 4 29 4c-7 0-13 5-15 12-7 0-12 5-12 11 0 4 4 7 11 7Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const sun = `<circle cx="19" cy="18" r="7" fill="none" stroke="currentColor" stroke-width="2.6"/>
+    <g stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+      <path d="M19 3v5"/><path d="M19 28v5"/><path d="M4 18h5"/><path d="M29 18h5"/>
+      <path d="m8.5 7.5 3.5 3.5"/><path d="m26 25 3.5 3.5"/><path d="m29.5 7.5-3.5 3.5"/><path d="m12 25-3.5 3.5"/>
+    </g>`;
+  const moon = `<path d="M30 5c-7 2-12 8-12 15 0 8 6 14 14 14 5 0 9-2 12-6-2 .6-4 .9-6 .9-8 0-14-6-14-14 0-4 2-7 6-9.9Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const rain = n => Array.from({length:n},(_,i)=>`<path d="M${17+i*8} 38l-3 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>`).join('');
+  const snow = `<g stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <path d="M19 38v10"/><path d="m15 40 8 6"/><path d="m23 40-8 6"/>
+    <path d="M37 38v10"/><path d="m33 40 8 6"/><path d="m41 40-8 6"/>
+  </g>`;
+  const bolt = `<path d="m29 34-7 11h6l-4 9 12-14h-7l5-6Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>`;
+  const fog = `<g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M8 17h34"/><path d="M4 25h42"/><path d="M10 33h30"/></g>`;
+
+  let body = cloud;
+  if(c===0) body = isNight ? moon : sun;
+  else if(c===1) body = isNight
+      ? `${moon}<g transform="translate(18 17) scale(.62)">${cloud}</g>`
+      : `${sun}<g transform="translate(17 14) scale(.66)">${cloud}</g>`;
+  else if(c===2) body = isNight
+      ? `${moon}<g transform="translate(14 14) scale(.78)">${cloud}</g>`
+      : `${sun}<g transform="translate(14 13) scale(.78)">${cloud}</g>`;
+  else if(c===3) body = cloud;
+  else if([45,48].includes(c)) body = fog;
+  else if([51,53,55,56,57].includes(c)) body = `${cloud}${rain(2)}`;
+  else if([61,63,66,80,81].includes(c)) body = `${cloud}${rain(3)}`;
+  else if([65,67,82].includes(c)) body = `${cloud}${rain(4)}`;
+  else if([71,73,75,77,85,86].includes(c)) body = `${cloud}${snow}`;
+  else if([95,96,99].includes(c)) body = `${cloud}${bolt}${[96,99].includes(c)?rain(2):''}`;
+
+  return `<svg class="wx-svg" viewBox="0 0 56 56" aria-hidden="true" focusable="false">${body}</svg>`;
+}
 
 function modelEndpoints(){
   const p = new URLSearchParams({latitude:state.location.latitude,longitude:state.location.longitude,timezone:'auto',forecast_days:'7',temperature_unit:state.units,wind_speed_unit:state.wind,hourly:'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m',daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset,uv_index_max'});
@@ -136,7 +179,7 @@ function renderWeather(){
   $('currentTemp').textContent=fmtTemp(c.hourly.temperature_2m[i]);
   $('conditionText').textContent=weatherText(code);
   $('feelsLike').textContent=`Feels like ${fmtTemp(c.hourly.apparent_temperature[i])}`;
-  $('weatherGlyph').textContent=weatherGlyph(code);
+  $('weatherGlyph').innerHTML=weatherGlyph(code,isNightTime(c.hourly.time[i]));
   $('confidenceText').textContent=`${confidenceLabel(c.hourly.temp_spread[i])} · ±${round(c.hourly.temp_spread[i],1)}°`;
   const rainMean=round(c.hourly.precipitation[i],1);
   const pop=state.probabilityConsensus?.probability?.[i];
@@ -176,7 +219,7 @@ function renderHourly(c,b,start){
   for(let n=0;n<24 && start+n<c.hourly.time.length;n++){
     const i=start+n, card=document.createElement('div'); card.className='hour-card'+(n===0?' now':'');
     const dt=new Date(c.hourly.time[i]); const code=b.hourly.weather_code?.[i] ?? c.hourly.weather_code[i];
-    card.innerHTML=`<div class="hour-time">${n===0?'NOW':dt.toLocaleTimeString([], {hour:'2-digit'})}</div><div class="hour-icon">${weatherGlyph(code)}</div><div class="hour-temp">${fmtTemp(c.hourly.temperature_2m[i])}</div><div class="hour-rain">${Number.isFinite(state.probabilityConsensus?.probability?.[i])?Math.round(state.probabilityConsensus.probability[i])+'% rain':'--'}</div>`;
+    card.innerHTML=`<div class="hour-time">${n===0?'NOW':dt.toLocaleTimeString([], {hour:'2-digit'})}</div><div class="hour-icon">${weatherGlyph(code,isNightTime(c.hourly.time[i]))}</div><div class="hour-temp">${fmtTemp(c.hourly.temperature_2m[i])}</div><div class="hour-rain">${Number.isFinite(state.probabilityConsensus?.probability?.[i])?Math.round(state.probabilityConsensus.probability[i])+'% rain':'--'}</div>`;
     $('hourlyScroller').appendChild(card);
   }
 }
