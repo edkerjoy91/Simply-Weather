@@ -1,12 +1,14 @@
-SIMPLY WEATHER v6
+SIMPLY WEATHER v7
 
-Fix:
-- Removed every legacy Unicode weather symbol, including the pie-chart-looking partly-cloudy icon.
-- All current, hourly, and 7-day weather conditions now use the custom Swiss/minimal SVG icon set.
-- Partly cloudy is explicitly sun/moon behind a cloud.
-- Current hero icon uses SVG correctly instead of rendering SVG markup as text.
-- PWA cache bumped to v6 so iPhone should fetch the corrected assets.
+Critical fix for stale iPhone PWA assets:
+- The screenshot showing pie-chart and umbrella icons was the old cached JavaScript, not the v6 SVG renderer.
+- v7 force-clears previous Simply Weather service-worker caches one time.
+- CSS, JS, manifest and icons now use ?v=7 cache-busting URLs.
+- Service worker calls skipWaiting() and uses network-first loading for HTML/JS/CSS.
+- Service-worker registration uses updateViaCache:'none'.
+- All legacy weather Unicode symbols remain removed.
+- The 7-day outlook uses only the custom Swiss/minimal SVG weather icons.
 
-Deploy:
-Replace the GitHub Pages repository files with the CONTENTS of this folder.
-After GitHub deploys, fully close Simply Weather from the iPhone app switcher and reopen it.
+DEPLOY
+Upload the CONTENTS of this folder to the repository root and wait for GitHub Pages to finish deploying.
+Then open the existing Home Screen app. v7 performs the old-cache cleanup itself.

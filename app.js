@@ -1,3 +1,5 @@
+const SIMPLY_WEATHER_BUILD='v7';
+console.info('Simply Weather',SIMPLY_WEATHER_BUILD);
 
 async function reverseGeocodeCity(latitude, longitude){
   try{
@@ -428,5 +430,5 @@ function refreshOnOpen(){
 window.addEventListener('pageshow',refreshOnOpen);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshOnOpen();});
 window.addEventListener('focus',refreshOnOpen);
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=7',{updateViaCache:'none'}).catch(()=>{}));
 loadWeather();

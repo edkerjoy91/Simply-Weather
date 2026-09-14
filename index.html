@@ -8,13 +8,32 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Weather" />
   <title>Weather</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="manifest" href="manifest.webmanifest?v=7" />
+  <link rel="apple-touch-icon" href="icon-192.png?v=7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=7" />
+
+<script>
+(function(){
+  const MIGRATION_KEY='simply-weather-cache-v7';
+  if(localStorage.getItem(MIGRATION_KEY)==='done') return;
+  Promise.all([
+    ('caches' in window) ? caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))) : Promise.resolve(),
+    ('serviceWorker' in navigator) ? navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))) : Promise.resolve()
+  ]).finally(()=>{
+    localStorage.setItem(MIGRATION_KEY,'done');
+    if(!location.search.includes('v=7')){
+      const u=new URL(location.href);
+      u.searchParams.set('v','7');
+      location.replace(u.toString());
+    }
+  });
+})();
+</script>
+
 </head>
 <body>
   <main class="app-shell">
@@ -155,6 +174,6 @@
   </dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" ></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
