@@ -5,6 +5,7 @@ const state = {
   models: [], probabilityModels: [], consensus: null, probabilityConsensus: null, best: null,
   map: null, radarLayer: null, radarFrames: [], radarTimer: null,
   lastRefreshAt: 0,
+  favorites: JSON.parse(localStorage.getItem('weather-favorites') || '[]'),
 };
 
 const $ = id => document.getElementById(id);
@@ -23,6 +24,8 @@ function modelEndpoints(){
     {name:'DWD ICON', url:`https://api.open-meteo.com/v1/dwd-icon?${p}`},
     {name:'GFS', url:`https://api.open-meteo.com/v1/gfs?${p}`},
     {name:'ItaliaMeteo', url:`https://api.open-meteo.com/v1/forecast?${p}&models=italia_meteo_arpae_icon_2i`},
+    {name:'UKMO', url:`https://api.open-meteo.com/v1/ukmo?${p}`},
+    {name:'Météo-France', url:`https://api.open-meteo.com/v1/meteofrance?${p}`},
   ];
 }
 
@@ -40,6 +43,7 @@ function probabilityEndpoints(){
     {name:'DWD ICON-EPS', url:`https://api.open-meteo.com/v1/dwd-icon?${p}`},
     {name:'NOAA GEFS', url:`https://api.open-meteo.com/v1/gfs?${p}`},
     {name:'CMC GEPS', url:`https://api.open-meteo.com/v1/gem?${p}`},
+    {name:'BOM ACCESS-GE', url:`https://api.open-meteo.com/v1/bom?${p}`},
   ];
 }
 
@@ -63,7 +67,7 @@ function buildProbabilityConsensus(results, targetTimes){
 
 async function loadWeather(){
   document.body.classList.add('loading');
-  $('locationName').textContent = state.location.name.toUpperCase();
+  $('locationName').textContent = state.location.isCurrent ? `CURRENT LOCATION (${state.location.name.split(',')[0].toUpperCase()})` : state.location.name.split(',')[0].toUpperCase();
   const endpointList = modelEndpoints();
   const probabilityList = probabilityEndpoints();
   const [results, probabilityResults] = await Promise.all([
@@ -165,9 +169,66 @@ function renderHourly(c,b,start){
     $('hourlyScroller').appendChild(card);
   }
 }
+function conditionFamily(code){
+  if([95,96,99].includes(code)) return 'storm';
+  if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return 'rain';
+  if([71,73,75,77,85,86].includes(code)) return 'snow';
+  if([45,48].includes(code)) return 'fog';
+  if([0,1].includes(code)) return 'clear';
+  return 'cloud';
+}
+function familyCode(f){ return ({clear:0,cloud:2,fog:45,rain:63,snow:73,storm:95})[f] ?? 2; }
+function dailyConsensusAt(date){
+  const valid=state.models.filter(m=>m.ok && m.data?.daily?.time);
+  const entries=valid.map(m=>{const i=m.data.daily.time.indexOf(date); return i<0?null:{
+    name:m.name, code:m.data.daily.weather_code?.[i], max:m.data.daily.temperature_2m_max?.[i],
+    min:m.data.daily.temperature_2m_min?.[i], rain:m.data.daily.precipitation_sum?.[i]
+  }}).filter(Boolean);
+  const fams=entries.map(e=>conditionFamily(e.code));
+  const counts=fams.reduce((a,f)=>(a[f]=(a[f]||0)+1,a),{});
+  const dominant=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0] || ['cloud',0];
+  const maxs=entries.map(e=>e.max).filter(Number.isFinite), mins=entries.map(e=>e.min).filter(Number.isFinite);
+  const tempRange=[...maxs,...mins];
+  const tempSpread=tempRange.length>1 ? Math.max(...maxs)-Math.min(...maxs) : 0;
+
+  // For each ensemble system, use that system's maximum hourly PoP for the calendar day.
+  // Then combine systems equally; raw ensemble member counts never appear in the UI.
+  const pops=state.probabilityModels.filter(m=>m.ok && m.data?.hourly?.time).map(m=>{
+    const vals=m.data.hourly.time.map((t,i)=>t.startsWith(date)?m.data.hourly.precipitation_probability?.[i]:null).filter(Number.isFinite);
+    return vals.length?Math.max(...vals):null;
+  }).filter(Number.isFinite);
+  const pop=pops.length?avg(pops):null;
+  const popSpread=pops.length>1?Math.max(...pops)-Math.min(...pops):0;
+  const conditionAgreement=entries.length?dominant[1]/entries.length:.5;
+  const rainAgreement=pops.length>1?Math.max(.25,1-popSpread/100):.55;
+  const tempAgreement=Math.max(.25,1-Math.min(tempSpread,8)/8);
+  const score=.50*conditionAgreement+.30*rainAgreement+.20*tempAgreement;
+  const label=score>=.82?'Very high':score>=.68?'High':score>=.48?'Mixed':'Low';
+  return {entries, dominant:dominant[0], code:familyCode(dominant[0]), max:avg(maxs), min:avg(mins),
+          pop, label, score, systemsAgree:dominant[1], systemsTotal:entries.length, tempSpread};
+}
 function renderDaily(b){
   $('dailyList').innerHTML='';
-  b.daily.time.slice(0,7).forEach((t,i)=>{const row=document.createElement('div');row.className='daily-row';const d=new Date(`${t}T12:00:00`);row.innerHTML=`<span>${i===0?'Today':d.toLocaleDateString([], {weekday:'short'})}</span><span class="daily-icon">${weatherGlyph(b.daily.weather_code[i])}</span><span>${round(b.daily.precipitation_sum?.[i],1) ?? 0} mm</span><strong>${fmtTemp(b.daily.temperature_2m_max[i])} / ${fmtTemp(b.daily.temperature_2m_min[i])}</strong>`;$('dailyList').appendChild(row);});
+  b.daily.time.slice(0,7).forEach((t,i)=>{
+    const x=dailyConsensusAt(t), row=document.createElement('button'); row.className='daily-row';
+    const d=new Date(`${t}T12:00:00`);
+    const agreement=x.systemsTotal ? `${x.systemsAgree}/${x.systemsTotal} systems agree` : 'Consensus unavailable';
+    row.innerHTML=`<span class="daily-day">${i===0?'Today':d.toLocaleDateString([], {weekday:'short'})}</span>
+      <span class="daily-icon">${weatherGlyph(x.code)}</span>
+      <span class="daily-rain">${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'--'}</span>
+      <strong class="daily-temp">${fmtTemp(x.max)} / ${fmtTemp(x.min)}</strong>
+      <span class="daily-confidence"><b>${x.label} consensus</b><small>${agreement}</small></span>`;
+    row.onclick=()=>showDailyConsensus(t,x);
+    $('dailyList').appendChild(row);
+  });
+}
+function showDailyConsensus(date,x){
+  const dlg=$('dailyDialog'), d=new Date(`${date}T12:00:00`);
+  $('dailyDialogTitle').textContent=d.toLocaleDateString([], {weekday:'long',month:'short',day:'numeric'});
+  $('dailyDialogSummary').innerHTML=`<strong>${x.label} consensus</strong><span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain probability':'Rain probability unavailable'} · temperature spread ${round(x.tempSpread,1)}°</span>`;
+  $('dailyModelRows').innerHTML='';
+  x.entries.forEach(e=>{const r=document.createElement('div');r.className='model-row';r.innerHTML=`<span><strong>${e.name}</strong><small class="model-status">${weatherText(e.code)}</small></span><strong>${fmtTemp(e.max)} / ${fmtTemp(e.min)}</strong>`;$('dailyModelRows').appendChild(r);});
+  dlg.showModal();
 }
 function renderRainModels(i, open=false){
   const c=state.consensus; if(!c) return;
@@ -215,13 +276,43 @@ async function useCurrentLocation(){
   navigator.geolocation.getCurrentPosition(async pos=>{
     const {latitude,longitude}=pos.coords; let name='Current location';
     try{const g=await fetchJson(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`);name=g.results?.[0]?.name||name;}catch{}
-    state.location={name,latitude,longitude}; localStorage.setItem('weather-location',JSON.stringify(state.location)); loadWeather(); if(state.map) state.map.setView([latitude,longitude],8);
+    state.location={name:name.split(',')[0],latitude,longitude,isCurrent:true}; localStorage.setItem('weather-location',JSON.stringify(state.location)); loadWeather(); if(state.map) state.map.setView([latitude,longitude],8);
   },()=>{}, {enableHighAccuracy:true,timeout:8000});
 }
 
+function saveFavorite(p){
+  const fav={name:p.name.split(',')[0],latitude:p.latitude,longitude:p.longitude};
+  if(!state.favorites.some(x=>Math.abs(x.latitude-fav.latitude)<.001 && Math.abs(x.longitude-fav.longitude)<.001)){
+    state.favorites.push(fav); localStorage.setItem('weather-favorites',JSON.stringify(state.favorites));
+  }
+  renderFavorites();
+}
+function removeFavorite(i){state.favorites.splice(i,1);localStorage.setItem('weather-favorites',JSON.stringify(state.favorites));renderFavorites();}
+function loadPlace(p){
+  state.location={name:p.name.split(',')[0],latitude:p.latitude,longitude:p.longitude,isCurrent:false};
+  localStorage.setItem('weather-location',JSON.stringify(state.location)); switchView('weatherView'); loadWeather();
+}
+function renderFavorites(){
+  const el=$('savedLocations'); el.innerHTML='';
+  if(!state.favorites.length){el.innerHTML='<div class="favorites-title eyebrow">FAVORITES</div><div class="micro">Tap ☆ beside a search result to save a city.</div>';return;}
+  const title=document.createElement('div');title.className='favorites-title eyebrow';title.textContent='FAVORITES';el.appendChild(title);
+  state.favorites.forEach((p,i)=>{const row=document.createElement('div');row.className='favorite-row';
+    const b=document.createElement('button');b.className='favorite-load';b.innerHTML=`<strong>★ ${p.name}</strong>`;b.onclick=()=>loadPlace(p);
+    const x=document.createElement('button');x.className='favorite-remove';x.textContent='×';x.setAttribute('aria-label',`Remove ${p.name}`);x.onclick=()=>removeFavorite(i);
+    row.append(b,x);el.appendChild(row);
+  });
+}
 async function searchLocations(q){
-  const data=await fetchJson(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`);
-  $('searchResults').innerHTML=''; (data.results||[]).forEach(p=>{const b=document.createElement('button');b.className='place-row';b.innerHTML=`<strong>${p.name}</strong><span class="micro">${[p.admin1,p.country].filter(Boolean).join(', ')}</span>`;b.onclick=()=>{state.location={name:p.name,latitude:p.latitude,longitude:p.longitude};localStorage.setItem('weather-location',JSON.stringify(state.location));switchView('weatherView');loadWeather();};$('searchResults').appendChild(b);});
+  if(q.length<2){$('searchResults').innerHTML='';return;}
+  try{
+    const data=await fetchJson(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`);
+    $('searchResults').innerHTML='';
+    (data.results||[]).forEach(p=>{const row=document.createElement('div');row.className='place-row-wrap';
+      const b=document.createElement('button');b.className='place-row';b.innerHTML=`<strong>${p.name}</strong><span class="micro">${[p.admin1,p.country].filter(Boolean).join(', ')}</span>`;b.onclick=()=>loadPlace(p);
+      const star=document.createElement('button');star.className='favorite-star';star.textContent='☆';star.setAttribute('aria-label',`Favorite ${p.name}`);star.onclick=()=>saveFavorite(p);
+      row.append(b,star);$('searchResults').appendChild(row);
+    });
+  }catch(e){$('searchResults').innerHTML='<div class="micro">Location search unavailable.</div>';}
 }
 
 function switchView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===id));if(id==='mapView') initMap(); }
@@ -250,10 +341,14 @@ function toggleRadarPlay(){
 $('refreshButton').onclick=loadWeather;$('locationButton').onclick=useCurrentLocation;$('mapLocateButton').onclick=useCurrentLocation;
 $('rainDetailsButton').onclick=()=>{if(state.consensus)renderRainModels(currentIndex(state.consensus.hourly.time),true);};
 $('closeRainDialog').onclick=()=>$('rainDialog').close();
+$('closeDailyDialog').onclick=()=>$('dailyDialog').close();
 $('modelDetailsButton').onclick=()=>$('modelDialog').showModal();$('closeModelDialog').onclick=()=>$('modelDialog').close();
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view));
 $('radarSlider').oninput=e=>setRadarFrame(Number(e.target.value));$('radarPlayButton').onclick=toggleRadarPlay;
 $('locationSearchForm').onsubmit=e=>{e.preventDefault();const q=$('locationSearchInput').value.trim();if(q)searchLocations(q);};
+let searchTimer=null;
+$('locationSearchInput').addEventListener('input',e=>{clearTimeout(searchTimer);const q=e.target.value.trim();searchTimer=setTimeout(()=>searchLocations(q),275);});
+renderFavorites();
 $('unitSelect').value=state.units;$('windSelect').value=state.wind;
 $('unitSelect').onchange=e=>{state.units=e.target.value;localStorage.setItem('weather-units',state.units);loadWeather();};
 $('windSelect').onchange=e=>{state.wind=e.target.value;localStorage.setItem('weather-wind',state.wind);loadWeather();};

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="theme-color" content="#f3f0e8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -71,7 +71,7 @@
         <div><span class="eyebrow">SUNSET</span><strong id="sunsetText">--:--</strong></div>
       </section>
 
-      <footer class="source-note">Forecast data: Open‑Meteo. Temperature and precipitation amounts use ECMWF, DWD ICON, GFS and ItaliaMeteo; precipitation probability uses independent DWD ICON‑EPS, NOAA GEFS and CMC GEPS ensembles.</footer>
+      <footer class="source-note">Forecast data: Open‑Meteo. Forecast consensus uses ECMWF, DWD ICON, GFS, ItaliaMeteo, UKMO and Météo‑France where available. Precipitation probability combines independent ensemble systems.</footer>
     </section>
 
     <section id="mapView" class="view">
@@ -99,8 +99,8 @@
     <section id="locationsView" class="view">
       <header class="topbar"><div><div class="eyebrow">PLACES</div><div class="map-title">Locations</div></div></header>
       <form id="locationSearchForm" class="search-row">
-        <input id="locationSearchInput" placeholder="Search city" autocomplete="off" />
-        <button class="pill-button" type="submit">Search</button>
+        <input id="locationSearchInput" placeholder="Search city" autocomplete="off" autocapitalize="words" />
+        
       </form>
       <div id="searchResults" class="search-results"></div>
       <div id="savedLocations" class="saved-locations"></div>
@@ -114,7 +114,7 @@
       </div>
       <div class="settings-card">
         <div class="eyebrow">ABOUT THE CONSENSUS</div>
-        <p class="settings-copy">The displayed temperature forecast is the mean of the available deterministic models. Temperature confidence is based on model spread. Precipitation probability is calculated separately from independent ensemble systems: DWD ICON‑EPS, NOAA GEFS and CMC GEPS. Each probability is the share of ensemble members forecasting more than 0.1 mm in the hour, and the app shows their consensus rather than treating deterministic model agreement as probability.</p>
+        <p class="settings-copy">The displayed temperature forecast is the mean of the available deterministic models. Temperature confidence is based on model spread. Precipitation probability is calculated separately from independent ensemble systems including DWD ICON‑EPS, NOAA GEFS, CMC GEPS and BOM ACCESS‑GE. Each probability is the share of ensemble members forecasting more than 0.1 mm in the hour, and the app shows their consensus rather than treating deterministic model agreement as probability.</p>
       </div>
     </section>
 
@@ -134,6 +134,16 @@
     <p class="micro">Models can update at different times, so a temporarily unavailable source is excluded rather than treated as zero.</p>
   </dialog>
 
+
+
+  <dialog id="dailyDialog" class="model-dialog">
+    <button id="closeDailyDialog" class="dialog-close">×</button>
+    <div class="eyebrow">7 DAY CONSENSUS</div>
+    <h2 id="dailyDialogTitle">Forecast</h2>
+    <div id="dailyDialogSummary" class="daily-dialog-summary"></div>
+    <div id="dailyModelRows"></div>
+    <p class="micro">Simply Weather combines independent forecast systems. Ensemble systems are summarized as probabilities; raw member counts are intentionally hidden.</p>
+  </dialog>
 
   <dialog id="rainDialog" class="model-dialog">
     <button id="closeRainDialog" class="dialog-close">×</button>

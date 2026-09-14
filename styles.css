@@ -15,3 +15,24 @@
 .rain-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 18px}.rain-summary>div{background:var(--panel);border-radius:12px;padding:12px}.rain-summary strong{display:block;font-size:19px;margin-top:4px}.rain-model-amount{font-variant-numeric:tabular-nums}.model-wet{font-size:10px;letter-spacing:.1em;color:var(--muted);margin-top:2px}.forecast-chip{cursor:pointer}.forecast-chip small{line-height:1.25}
 .dialog-section-label{margin-top:22px;padding:10px 0 6px;border-bottom:1px solid rgba(20,20,20,.12)}
 .probability-foot{margin-top:14px;line-height:1.45}
+
+/* v4 — 7-day consensus is a primary feature */
+.daily-list{border-top:1px solid var(--line);margin-bottom:28px}
+.daily-row{appearance:none;width:100%;color:inherit;background:transparent;border:0;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:.8fr .72fr .9fr 1.15fr;grid-template-areas:"day icon rain temp" "confidence confidence confidence confidence";
+  gap:5px 8px;align-items:center;padding:18px 0;text-align:left;font:inherit}
+.daily-day{grid-area:day;font-size:14px;font-weight:600}
+.daily-icon{grid-area:icon;text-align:center;font-size:42px;line-height:1}
+.daily-rain{grid-area:rain;font-size:12px;color:var(--muted)}
+.daily-temp{grid-area:temp;text-align:right;font-size:14px}
+.daily-confidence{grid-area:confidence;display:flex;justify-content:space-between;align-items:center;margin-top:7px}
+.daily-confidence b{font-size:11px;letter-spacing:.09em;text-transform:uppercase}
+.daily-confidence small{font-size:10px;color:var(--muted)}
+.daily-dialog-summary{display:flex;flex-direction:column;gap:5px;padding:14px 0 18px;border-top:1px solid var(--line)}
+.daily-dialog-summary strong{font-size:18px}.daily-dialog-summary span{font-size:12px;color:var(--muted)}
+.place-row-wrap{display:grid;grid-template-columns:1fr 44px;gap:6px;align-items:stretch}
+.place-row-wrap .place-row{border-radius:14px}.favorite-star,.favorite-remove{border:1px solid var(--line);background:transparent;color:inherit;border-radius:14px;font-size:22px}
+.favorites-title{margin-top:24px;margin-bottom:8px}.favorite-row{display:grid;grid-template-columns:1fr 44px;gap:6px}
+.favorite-load{border:1px solid var(--line);background:transparent;color:inherit;border-radius:14px;padding:14px;text-align:left;font:inherit}
+.search-row input{width:100%}
+#map,.leaflet-container{touch-action:none}
