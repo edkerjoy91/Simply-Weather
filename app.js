@@ -1,3 +1,14 @@
+
+async function reverseGeocodeCity(latitude, longitude){
+  try{
+    const url=`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&localityLanguage=en`;
+    const data=await fetchJson(url);
+    return (data.city || data.locality || data.principalSubdivision || 'Current location').split(',')[0];
+  }catch(e){
+    return 'Current location';
+  }
+}
+
 const state = {
   location: JSON.parse(localStorage.getItem('weather-location') || 'null') || { name:'Genova', latitude:44.4056, longitude:8.9463 },
   units: localStorage.getItem('weather-units') || 'celsius',
@@ -276,16 +287,29 @@ async function useCurrentLocation(){
   navigator.geolocation.getCurrentPosition(async pos=>{
     const {latitude,longitude}=pos.coords; let name='Current location';
     try{const g=await fetchJson(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`);name=g.results?.[0]?.name||name;}catch{}
-    state.location={name:name.split(',')[0],latitude,longitude,isCurrent:true}; localStorage.setItem('weather-location',JSON.stringify(state.location)); loadWeather(); if(state.map) state.map.setView([latitude,longitude],8);
+    const city=await reverseGeocodeCity(latitude,longitude); state.location={name:city,latitude,longitude,isCurrent:true}; localStorage.setItem('weather-location',JSON.stringify(state.location)); loadWeather(); if(state.map) state.map.setView([latitude,longitude],8);
   },()=>{}, {enableHighAccuracy:true,timeout:8000});
 }
 
-function saveFavorite(p){
-  const fav={name:p.name.split(',')[0],latitude:p.latitude,longitude:p.longitude};
-  if(!state.favorites.some(x=>Math.abs(x.latitude-fav.latitude)<.001 && Math.abs(x.longitude-fav.longitude)<.001)){
-    state.favorites.push(fav); localStorage.setItem('weather-favorites',JSON.stringify(state.favorites));
-  }
+function isFavorite(p){
+  return state.favorites.some(x=>Math.abs(x.latitude-p.latitude)<.001 && Math.abs(x.longitude-p.longitude)<.001);
+}
+function toggleFavorite(p){
+  const i=state.favorites.findIndex(x=>Math.abs(x.latitude-p.latitude)<.001 && Math.abs(x.longitude-p.longitude)<.001);
+  if(i>=0) state.favorites.splice(i,1);
+  else state.favorites.push({name:p.name.split(',')[0],latitude:p.latitude,longitude:p.longitude});
+  localStorage.setItem('weather-favorites',JSON.stringify(state.favorites));
   renderFavorites();
+  refreshSearchStars();
+}
+function refreshSearchStars(){
+  document.querySelectorAll('.favorite-star').forEach(btn=>{
+    const p=JSON.parse(btn.dataset.place||'{}');
+    const saved=isFavorite(p);
+    btn.textContent=saved?'★':'☆';
+    btn.classList.toggle('is-saved',saved);
+    btn.setAttribute('aria-label',`${saved?'Remove':'Favorite'} ${p.name||'city'}`);
+  });
 }
 function removeFavorite(i){state.favorites.splice(i,1);localStorage.setItem('weather-favorites',JSON.stringify(state.favorites));renderFavorites();}
 function loadPlace(p){
@@ -309,7 +333,7 @@ async function searchLocations(q){
     $('searchResults').innerHTML='';
     (data.results||[]).forEach(p=>{const row=document.createElement('div');row.className='place-row-wrap';
       const b=document.createElement('button');b.className='place-row';b.innerHTML=`<strong>${p.name}</strong><span class="micro">${[p.admin1,p.country].filter(Boolean).join(', ')}</span>`;b.onclick=()=>loadPlace(p);
-      const star=document.createElement('button');star.className='favorite-star';star.textContent='☆';star.setAttribute('aria-label',`Favorite ${p.name}`);star.onclick=()=>saveFavorite(p);
+      const star=document.createElement('button');star.className='favorite-star';star.dataset.place=JSON.stringify({name:p.name,latitude:p.latitude,longitude:p.longitude}); const saved=isFavorite(p); star.textContent=saved?'★':'☆'; star.classList.toggle('is-saved',saved); star.setAttribute('aria-label',`${saved?'Remove':'Favorite'} ${p.name}`); star.onclick=()=>toggleFavorite(p);
       row.append(b,star);$('searchResults').appendChild(row);
     });
   }catch(e){$('searchResults').innerHTML='<div class="micro">Location search unavailable.</div>';}

@@ -36,3 +36,11 @@
 .favorite-load{border:1px solid var(--line);background:transparent;color:inherit;border-radius:14px;padding:14px;text-align:left;font:inherit}
 .search-row input{width:100%}
 #map,.leaflet-container{touch-action:none}
+
+/* v5 Swiss/minimal weather icon set */
+.wx-svg{display:inline-block;width:1em;height:1em;overflow:visible;vertical-align:middle}
+.daily-icon .wx-svg{width:48px;height:48px}
+.hourly-card .wx-svg,.hour-card .wx-svg{width:28px;height:28px}
+.current-icon .wx-svg,.hero-icon .wx-svg{width:82px;height:82px}
+.favorite-star.is-saved{font-variation-settings:"FILL" 1; background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.favorite-star{transition:background .12s ease,color .12s ease,border-color .12s ease}

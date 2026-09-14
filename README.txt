@@ -1,16 +1,11 @@
-SIMPLY WEATHER v4
+SIMPLY WEATHER v5
 
 Changes:
-- 7-day outlook redesigned around consensus, with much larger condition symbols.
-- Each day shows a clean Very high / High / Mixed / Low consensus label.
-- Raw ensemble-member counts are hidden.
-- Daily rain probability combines ensemble systems equally at the system level.
-- Deterministic consensus expanded with UKMO and Météo-France where available.
-- Precipitation probability adds BOM ACCESS-GE where available.
-- Current-location header displays CURRENT LOCATION (CITY).
-- Search autocompletes after ~275 ms while typing.
-- Locations can be saved as Favorites and removed.
-- Page pinch zoom is disabled; radar map retains Leaflet pinch/pan gestures.
-- PWA cache bumped to v4.
+- Swiss/minimal custom SVG weather icon set throughout the app.
+- Partly cloudy now reads clearly as sun/moon behind a cloud, replacing the ambiguous partial-circle symbol.
+- Current Location now reverse-geocodes GPS coordinates to the nearest city/locality.
+- Favorite stars toggle immediately between ☆ and ★ and stay filled when a city is already saved.
+- Existing v4 features remain: consensus-focused 7-day outlook, larger icons, live autocomplete, favorites, fixed app zoom with radar pinch/pan, expanded consensus sources.
 
-Deploy: upload the CONTENTS of this folder to the root of the GitHub Pages repository.
+Deploy:
+Upload the CONTENTS of this folder to the root of the GitHub Pages repository.
