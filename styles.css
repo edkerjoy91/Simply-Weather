@@ -71,3 +71,15 @@
 .daily-icon .wx-svg{width:52px;height:52px}
 .hour-icon .wx-svg{width:32px;height:32px}
 .weather-glyph .wx-svg{width:88px;height:88px}
+
+/* v8: whole-day consensus */
+.current-hour-consensus{display:none}
+.today-consensus{padding:20px 0 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:26px}
+.today-consensus-main{display:flex;align-items:center;gap:14px;margin-top:12px}
+.today-consensus-icon{width:52px;height:52px;display:block;flex:0 0 52px}
+.today-consensus-icon .wx-svg{width:52px;height:52px}
+.today-consensus-main div{display:flex;flex-direction:column;gap:3px}
+.today-consensus-main strong{font-size:24px;font-weight:500;letter-spacing:-.02em}
+.today-consensus-main span,.today-consensus p{color:var(--muted)}
+.today-consensus p{font-size:14px;line-height:1.45;margin:13px 0}
+.today-consensus-meta{display:flex;gap:18px;font-size:12px;font-weight:600;flex-wrap:wrap}

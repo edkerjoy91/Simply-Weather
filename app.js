@@ -1,4 +1,4 @@
-const SIMPLY_WEATHER_BUILD='v7';
+const SIMPLY_WEATHER_BUILD='v8';
 console.info('Simply Weather',SIMPLY_WEATHER_BUILD);
 
 async function reverseGeocodeCity(latitude, longitude){
@@ -263,13 +263,76 @@ function dailyConsensusAt(date){
   return {entries, dominant:dominant[0], code:familyCode(dominant[0]), max:avg(maxs), min:avg(mins),
           pop, label, score, systemsAgree:dominant[1], systemsTotal:entries.length, tempSpread};
 }
+
+function rollingDailyDates(){
+  const dates=state.best?.daily?.time || [];
+  if(!dates.length) return [];
+  // Open-Meteo daily arrays begin at "today" in the selected location's timezone.
+  return dates.slice(0,7);
+}
+function todayConsensusSummary(date){
+  const d=dailyConsensusAt(date);
+  const models=state.models.filter(m=>m.ok && m.data?.hourly?.time);
+  const rows=[];
+  models.forEach(m=>m.data.hourly.time.forEach((t,i)=>{
+    if(t.startsWith(date)) rows.push({
+      time:t, code:m.data.hourly.weather_code?.[i],
+      rain:Number(m.data.hourly.precipitation?.[i]||0)
+    });
+  }));
+  const fams=rows.map(r=>conditionFamily(r.code));
+  const counts=fams.reduce((a,f)=>(a[f]=(a[f]||0)+1,a),{});
+  const dominant=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || d.dominant || 'cloud';
+  const rainy=rows.filter(r=>r.rain>=0.1);
+  const parts=[...new Set(rainy.map(r=>{
+    const h=Number(r.time.slice(11,13));
+    return h<12?'morning':h<17?'afternoon':h<21?'evening':'night';
+  }))];
+  let headline='Variable conditions';
+  if(dominant==='clear' && (!Number.isFinite(d.pop)||d.pop<20)) headline='Sunny and dry';
+  else if(dominant==='clear') headline='Mostly sunny';
+  else if(dominant==='cloud' && (!Number.isFinite(d.pop)||d.pop<25)) headline='Mostly cloudy and dry';
+  else if(dominant==='cloud') headline='Mostly cloudy';
+  else if(dominant==='rain') headline=(Number.isFinite(d.pop)&&d.pop>=70)?'Rain likely':(parts.length===1?`Showers possible in the ${parts[0]}`:'Showers possible');
+  else if(dominant==='storm') headline='Thunderstorms possible';
+  else if(dominant==='snow') headline='Snow possible';
+  else if(dominant==='fog') headline='Foggy at times';
+
+  let detail=(d.label==='Very high'||d.label==='High')
+    ? `Forecast systems ${d.label==='Very high'?'strongly ':''}agree on ${headline.toLowerCase()} today.`
+    : `Forecast systems show some disagreement about today's conditions.`;
+  if(Number.isFinite(d.pop)){
+    detail += d.pop<10?' Little to no rain is expected.'
+      : d.pop<30?' Rain is unlikely.'
+      : d.pop<60?' There is a meaningful chance of rain.'
+      : ' Rain is a significant possibility.';
+  }
+  return {...d,headline,detail};
+}
+function renderTodayConsensus(){
+  const date=rollingDailyDates()[0];
+  const box=document.getElementById('todayConsensus');
+  if(!date || !box) return;
+  const x=todayConsensusSummary(date);
+  box.innerHTML=`<div class="eyebrow">TODAY'S CONSENSUS</div>
+    <div class="today-consensus-main">
+      <span class="today-consensus-icon">${weatherGlyph(x.code)}</span>
+      <div><strong>${x.headline}</strong><span>${x.label} confidence</span></div>
+    </div>
+    <p>${x.detail}</p>
+    <div class="today-consensus-meta">
+      <span>High ${fmtTemp(x.max)}</span><span>Low ${fmtTemp(x.min)}</span>
+      <span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'Rain --'}</span>
+    </div>`;
+}
+
 function renderDaily(b){
   $('dailyList').innerHTML='';
-  b.daily.time.slice(0,7).forEach((t,i)=>{
+  rollingDailyDates().forEach((t,i)=>{
     const x=dailyConsensusAt(t), row=document.createElement('button'); row.className='daily-row';
     const d=new Date(`${t}T12:00:00`);
     const agreement=x.systemsTotal ? `${x.systemsAgree}/${x.systemsTotal} systems agree` : 'Consensus unavailable';
-    row.innerHTML=`<span class="daily-day">${i===0?'Today':d.toLocaleDateString([], {weekday:'short'})}</span>
+    row.innerHTML=`<span class="daily-day">${i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString([], {weekday:'short'})}</span>
       <span class="daily-icon">${weatherGlyph(x.code)}</span>
       <span class="daily-rain">${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'--'}</span>
       <strong class="daily-temp">${fmtTemp(x.max)} / ${fmtTemp(x.min)}</strong>
@@ -277,6 +340,7 @@ function renderDaily(b){
     row.onclick=()=>showDailyConsensus(t,x);
     $('dailyList').appendChild(row);
   });
+  renderTodayConsensus();
 }
 function showDailyConsensus(date,x){
   const dlg=$('dailyDialog'), d=new Date(`${date}T12:00:00`);
@@ -430,5 +494,5 @@ function refreshOnOpen(){
 window.addEventListener('pageshow',refreshOnOpen);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshOnOpen();});
 window.addEventListener('focus',refreshOnOpen);
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=7',{updateViaCache:'none'}).catch(()=>{}));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=8',{updateViaCache:'none'}).catch(()=>{}));
 loadWeather();
