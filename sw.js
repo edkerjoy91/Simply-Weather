@@ -1,12 +1,12 @@
-const CACHE='weather-v8-shell';
+const CACHE='weather-v9-shell';
 const ASSETS=[
   './',
-  './index.html?v=8',
-  './styles.css?v=8',
-  './app.js?v=8',
-  './manifest.webmanifest?v=8',
-  './icon-192.png?v=8',
-  './icon-512.png?v=8'
+  './index.html?v=9',
+  './styles.css?v=9',
+  './app.js?v=9',
+  './manifest.webmanifest?v=9',
+  './icon-192.png?v=9',
+  './icon-512.png?v=9'
 ];
 
 self.addEventListener('install', e=>{

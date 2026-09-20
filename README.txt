@@ -1,7 +1,10 @@
-SIMPLY WEATHER v8
+SIMPLY WEATHER v9
 
-- 7-day outlook now rolls from Today → Tomorrow → the next five days.
-- The prominent consensus section now summarizes the entire day rather than the current hour.
-- Daily consensus describes the likely character of the day in plain language and shows confidence, high/low and rain probability.
-- Existing model detail remains available elsewhere.
-- Cache bumped to v8.
+- Option 1 "Essential Outline" icon family is now used throughout the app.
+- Icons are thin, monochrome, explicit weather silhouettes: sun, sun/cloud, cloud, rain, heavy rain, storm, snow, fog, moon.
+- No pie-chart-style partly-cloudy symbols.
+- Top consensus is time-aware in the SELECTED LOCATION'S timezone.
+- Before 22:00 it summarizes Today.
+- From 22:00 onward it automatically summarizes Tomorrow and changes the heading to TOMORROW'S CONSENSUS.
+- Rolling 7-day outlook remains Today → Tomorrow → following five days.
+- Cache bumped to v9.

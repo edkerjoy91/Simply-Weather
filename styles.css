@@ -83,3 +83,6 @@
 .today-consensus-main span,.today-consensus p{color:var(--muted)}
 .today-consensus p{font-size:14px;line-height:1.45;margin:13px 0}
 .today-consensus-meta{display:flex;gap:18px;font-size:12px;font-weight:600;flex-wrap:wrap}
+
+/* v9 Option 1 — Essential Outline */
+.wx-svg.essential-outline{display:block;width:100%;height:100%;overflow:visible}

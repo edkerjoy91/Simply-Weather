@@ -1,4 +1,4 @@
-const SIMPLY_WEATHER_BUILD='v8';
+const SIMPLY_WEATHER_BUILD='v9';
 console.info('Simply Weather',SIMPLY_WEATHER_BUILD);
 
 async function reverseGeocodeCity(latitude, longitude){
@@ -37,40 +37,29 @@ function isNightTime(ts){
   }catch(e){ return false; }
 }
 
-function weatherGlyph(code, isNight=false){
-  const c = Number(code);
-  const cloud = `<path d="M13 34h27c7 0 12-5 12-11 0-6-4-10-10-11C40 7 35 4 29 4c-7 0-13 5-15 12-7 0-12 5-12 11 0 4 4 7 11 7Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
-  const sun = `<circle cx="19" cy="18" r="7" fill="none" stroke="currentColor" stroke-width="2.6"/>
-    <g stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
-      <path d="M19 3v5"/><path d="M19 28v5"/><path d="M4 18h5"/><path d="M29 18h5"/>
-      <path d="m8.5 7.5 3.5 3.5"/><path d="m26 25 3.5 3.5"/><path d="m29.5 7.5-3.5 3.5"/><path d="m12 25-3.5 3.5"/>
-    </g>`;
-  const moon = `<path d="M30 5c-7 2-12 8-12 15 0 8 6 14 14 14 5 0 9-2 12-6-2 .6-4 .9-6 .9-8 0-14-6-14-14 0-4 2-7 6-9.9Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
-  const rain = n => Array.from({length:n},(_,i)=>`<path d="M${17+i*8} 38l-3 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>`).join('');
-  const snow = `<g stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-    <path d="M19 38v10"/><path d="m15 40 8 6"/><path d="m23 40-8 6"/>
-    <path d="M37 38v10"/><path d="m33 40 8 6"/><path d="m41 40-8 6"/>
-  </g>`;
-  const bolt = `<path d="m29 34-7 11h6l-4 9 12-14h-7l5-6Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>`;
-  const fog = `<g stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M8 17h34"/><path d="M4 25h42"/><path d="M10 33h30"/></g>`;
-
-  let body = cloud;
-  if(c===0) body = isNight ? moon : sun;
-  else if(c===1) body = isNight
-      ? `${moon}<g transform="translate(18 17) scale(.62)">${cloud}</g>`
-      : `${sun}<g transform="translate(17 14) scale(.66)">${cloud}</g>`;
-  else if(c===2) body = isNight
-      ? `${moon}<g transform="translate(14 14) scale(.78)">${cloud}</g>`
-      : `${sun}<g transform="translate(14 13) scale(.78)">${cloud}</g>`;
-  else if(c===3) body = cloud;
-  else if([45,48].includes(c)) body = fog;
-  else if([51,53,55,56,57].includes(c)) body = `${cloud}${rain(2)}`;
-  else if([61,63,66,80,81].includes(c)) body = `${cloud}${rain(3)}`;
-  else if([65,67,82].includes(c)) body = `${cloud}${rain(4)}`;
-  else if([71,73,75,77,85,86].includes(c)) body = `${cloud}${snow}`;
-  else if([95,96,99].includes(c)) body = `${cloud}${bolt}${[96,99].includes(c)?rain(2):''}`;
-
-  return `<svg class="wx-svg" viewBox="0 0 56 56" aria-hidden="true" focusable="false">${body}</svg>`;
+function weatherGlyph(code,isNight=false){
+  const c=Number(code);
+  const sun=`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="28" cy="28" r="8"/><path d="M28 8v7M28 41v7M8 28h7M41 28h7M14 14l5 5M37 37l5 5M42 14l-5 5M19 37l-5 5"/></g>`;
+  const moon=`<path d="M38 39c-12 1-21-7-21-18 0-7 4-13 10-17-2 12 7 23 19 23-1 5-4 9-8 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`;
+  const cloud=`<path d="M12 35h31c6 0 10-4 10-9s-4-9-9-9h-2C40 11 35 8 29 8c-8 0-14 6-15 14h-2c-6 0-10 3-10 7s4 6 10 6Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const partly=`${isNight?moon:sun}<g transform="translate(10 12) scale(.78)">${cloud}</g>`;
+  const rain=(heavy=false)=>`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <path d="M17 40l-3 ${heavy?9:7}M29 40l-3 ${heavy?9:7}M41 40l-3 ${heavy?9:7}"/></g>`;
+  const snow=`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M18 40v10M14 43l8 4M22 43l-8 4M38 40v10M34 43l8 4M42 43l-8 4"/></g>`;
+  const fog=`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 18h40M4 28h48M10 38h36"/></g>`;
+  const bolt=`<path d="M31 34l-8 12h7l-4 9 13-16h-8l5-5Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`;
+  let body=cloud;
+  if(c===0) body=isNight?moon:sun;
+  else if(c===1||c===2) body=partly;
+  else if(c===3) body=cloud;
+  else if([45,48].includes(c)) body=fog;
+  else if([51,53,55,56,57,61,63,66,80,81].includes(c)) body=cloud+rain(false);
+  else if([65,67,82].includes(c)) body=cloud+rain(true);
+  else if([71,73,75,77,85,86].includes(c)) body=cloud+snow;
+  else if([95,96,99].includes(c)) body=cloud+bolt;
+  return `<svg class="wx-svg essential-outline" viewBox="0 0 56 56" aria-hidden="true">${body}</svg>`;
 }
 
 function modelEndpoints(){
@@ -309,17 +298,40 @@ function todayConsensusSummary(date){
   }
   return {...d,headline,detail};
 }
+
+function selectedLocationNow(){
+  const offset=Number(state.best?.utc_offset_seconds||0);
+  return new Date(Date.now()+offset*1000);
+}
+function topConsensusDate(){
+  const dates=rollingDailyDates();
+  if(!dates.length) return null;
+  const local=selectedLocationNow();
+  const hour=local.getUTCHours();
+  return (hour>=22 && dates[1]) ? dates[1] : dates[0];
+}
+function topConsensusIsTomorrow(){
+  const dates=rollingDailyDates(), chosen=topConsensusDate();
+  return dates.length>1 && chosen===dates[1];
+}
+
 function renderTodayConsensus(){
-  const date=rollingDailyDates()[0];
+  const date=topConsensusDate();
   const box=document.getElementById('todayConsensus');
-  if(!date || !box) return;
+  if(!date||!box)return;
   const x=todayConsensusSummary(date);
-  box.innerHTML=`<div class="eyebrow">TODAY'S CONSENSUS</div>
+  const tomorrow=topConsensusIsTomorrow();
+  const label=tomorrow?"TOMORROW'S CONSENSUS":"TODAY'S CONSENSUS";
+  const subject=tomorrow?'tomorrow':'today';
+  let detail=x.detail
+    .replace(/\btoday\b/gi,subject)
+    .replace(/\btoday's\b/gi,`${subject}'s`);
+  box.innerHTML=`<div class="eyebrow">${label}</div>
     <div class="today-consensus-main">
       <span class="today-consensus-icon">${weatherGlyph(x.code)}</span>
       <div><strong>${x.headline}</strong><span>${x.label} confidence</span></div>
     </div>
-    <p>${x.detail}</p>
+    <p>${detail}</p>
     <div class="today-consensus-meta">
       <span>High ${fmtTemp(x.max)}</span><span>Low ${fmtTemp(x.min)}</span>
       <span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'Rain --'}</span>
@@ -494,5 +506,5 @@ function refreshOnOpen(){
 window.addEventListener('pageshow',refreshOnOpen);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshOnOpen();});
 window.addEventListener('focus',refreshOnOpen);
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=8',{updateViaCache:'none'}).catch(()=>{}));
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=9',{updateViaCache:'none'}).catch(()=>{}));
 loadWeather();
