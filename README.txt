@@ -1,10 +1,13 @@
-SIMPLY WEATHER v9
+SIMPLY WEATHER v10 — audited rebuild
 
-- Option 1 "Essential Outline" icon family is now used throughout the app.
-- Icons are thin, monochrome, explicit weather silhouettes: sun, sun/cloud, cloud, rain, heavy rain, storm, snow, fog, moon.
-- No pie-chart-style partly-cloudy symbols.
-- Top consensus is time-aware in the SELECTED LOCATION'S timezone.
-- Before 22:00 it summarizes Today.
-- From 22:00 onward it automatically summarizes Tomorrow and changes the heading to TOMORROW'S CONSENSUS.
-- Rolling 7-day outlook remains Today → Tomorrow → following five days.
-- Cache bumped to v9.
+Fixes:
+- Daily forecast dates are calculated from the selected city timezone and refresh across midnight.
+- Daily consensus is actually mounted in HTML and switches to tomorrow after 22:00.
+- Hourly forecasts are matched by timestamps, not array positions.
+- Forecast hours are compared using location UTC offset rather than the phone timezone.
+- One unified SVG icon family, no pie-chart symbols.
+- Daily rain value is labeled peak hourly probability, not full-day probability.
+- Concurrent refreshes cannot overwrite newer location requests.
+- Stable network-first service worker; no repeated unregister/reload loop.
+
+Upload all files to the root of the existing GitHub Pages repository.

@@ -86,3 +86,21 @@
 
 /* v9 Option 1 — Essential Outline */
 .wx-svg.essential-outline{display:block;width:100%;height:100%;overflow:visible}
+
+/* v10 unified essential-outline icons and responsive daily summary */
+.wx-svg{display:block;width:100%;height:100%;overflow:visible}
+.weather-glyph{width:88px;height:88px;flex:0 0 88px}
+.hour-icon{width:32px;height:32px;margin:12px auto}
+.daily-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.daily-icon .wx-svg{width:48px;height:48px}
+.confidence-strip{align-items:flex-start;gap:12px}
+.today-consensus{min-width:0;flex:1}
+.today-consensus-main{display:flex;gap:12px;align-items:center;margin-top:12px}
+.today-consensus-icon{width:52px;height:52px;flex:0 0 52px}
+.today-consensus-main div{display:flex;flex-direction:column;gap:4px}
+.today-consensus-main strong{font-size:22px;line-height:1.15;font-weight:500;letter-spacing:-.03em}
+.today-consensus-main div span{font-size:12px;color:var(--muted)}
+.today-consensus p{font-size:13px;line-height:1.5;color:var(--muted);margin:12px 0}
+.today-consensus-meta{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;font-weight:600}
+.daily-row{cursor:pointer}
+.daily-row:focus-visible{outline:2px solid currentColor;outline-offset:3px}

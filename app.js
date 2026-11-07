@@ -1,4 +1,4 @@
-const SIMPLY_WEATHER_BUILD='v9';
+const SIMPLY_WEATHER_BUILD='v10';
 console.info('Simply Weather',SIMPLY_WEATHER_BUILD);
 
 async function reverseGeocodeCity(latitude, longitude){
@@ -30,36 +30,56 @@ const degreeToCardinal = deg => ['N','NE','E','SE','S','SW','W','NW'][Math.round
 const weatherText = code => ({0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm',99:'Severe thunderstorm'})[code] || 'Variable weather';
 
 function isNightTime(ts){
-  try{
-    const d = new Date(ts);
-    const h = d.getHours();
-    return h < 7 || h >= 20;
-  }catch(e){ return false; }
+  const h=Number(String(ts).slice(11,13));
+  return Number.isFinite(h) ? (h<7 || h>=20) : false;
 }
 
-function weatherGlyph(code,isNight=false){
+function weatherGlyph(code, isNight=false){
   const c=Number(code);
-  const sun=`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-    <circle cx="28" cy="28" r="8"/><path d="M28 8v7M28 41v7M8 28h7M41 28h7M14 14l5 5M37 37l5 5M42 14l-5 5M19 37l-5 5"/></g>`;
-  const moon=`<path d="M38 39c-12 1-21-7-21-18 0-7 4-13 10-17-2 12 7 23 19 23-1 5-4 9-8 12Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`;
-  const cloud=`<path d="M12 35h31c6 0 10-4 10-9s-4-9-9-9h-2C40 11 35 8 29 8c-8 0-14 6-15 14h-2c-6 0-10 3-10 7s4 6 10 6Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
-  const partly=`${isNight?moon:sun}<g transform="translate(10 12) scale(.78)">${cloud}</g>`;
-  const rain=(heavy=false)=>`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-    <path d="M17 40l-3 ${heavy?9:7}M29 40l-3 ${heavy?9:7}M41 40l-3 ${heavy?9:7}"/></g>`;
-  const snow=`<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <path d="M18 40v10M14 43l8 4M22 43l-8 4M38 40v10M34 43l8 4M42 43l-8 4"/></g>`;
-  const fog=`<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 18h40M4 28h48M10 38h36"/></g>`;
-  const bolt=`<path d="M31 34l-8 12h7l-4 9 13-16h-8l5-5Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>`;
+  const sun=`<circle cx="22" cy="22" r="8"/><path d="M22 4v7M22 33v7M4 22h7M33 22h7M9.3 9.3l5 5M29.7 29.7l5 5M34.7 9.3l-5 5M14.3 29.7l-5 5"/>`;
+  const moon=`<path d="M35 7a17 17 0 1 0 15 28A18 18 0 0 1 35 7Z"/>`;
+  const cloud=`<path d="M14 43h33a10 10 0 0 0 0-20c-1 0-2 0-3 .3A15 15 0 0 0 15 27a8 8 0 0 0-1 16Z"/>`;
+  const smallCloud=`<path d="M23 45h27a8 8 0 0 0 0-16h-2a12 12 0 0 0-23 4 6 6 0 0 0-2 12Z"/>`;
+  const drops=`<path d="m19 48-3 8m17-8-3 8m17-8-3 8"/>`;
+  const heavy=`<path d="m16 48-4 10m15-10-4 10m15-10-4 10m15-10-4 10"/>`;
+  const snow=`<path d="M22 49v10m-5-7 10 4m0-4-10 4M44 49v10m-5-7 10 4m0-4-10 4"/>`;
+  const fog=`<path d="M9 20h46M5 31h54M12 42h40"/>`;
+  const bolt=`<path d="m34 43-8 12h8l-5 8 16-17h-9l5-3"/>`;
   let body=cloud;
-  if(c===0) body=isNight?moon:sun;
-  else if(c===1||c===2) body=partly;
-  else if(c===3) body=cloud;
-  else if([45,48].includes(c)) body=fog;
-  else if([51,53,55,56,57,61,63,66,80,81].includes(c)) body=cloud+rain(false);
-  else if([65,67,82].includes(c)) body=cloud+rain(true);
-  else if([71,73,75,77,85,86].includes(c)) body=cloud+snow;
-  else if([95,96,99].includes(c)) body=cloud+bolt;
-  return `<svg class="wx-svg essential-outline" viewBox="0 0 56 56" aria-hidden="true">${body}</svg>`;
+  if(c===0)body=isNight?moon:sun;
+  else if(c===1||c===2)body=`${isNight?moon:sun}${smallCloud}`;
+  else if(c===3)body=cloud;
+  else if([45,48].includes(c))body=fog;
+  else if([51,53,55,56,57,61,63,66,80,81].includes(c))body=cloud+drops;
+  else if([65,67,82].includes(c))body=cloud+heavy;
+  else if([71,73,75,77,85,86].includes(c))body=cloud+snow;
+  else if([95,96,99].includes(c))body=cloud+bolt;
+  return `<svg class="wx-svg" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
+
+function locationParts(now=new Date()){
+  const tz=state.best?.timezone || 'UTC';
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(now);
+  const v=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+  return {date:`${v.year}-${v.month}-${v.day}`,hour:Number(v.hour),tz};
+}
+function apiHourEpoch(localISO){
+  // Open-Meteo local timestamps are timezone-less; use its offset to compare absolute instants.
+  const offset=Number(state.best?.utc_offset_seconds||0);
+  return Date.parse(localISO+'Z')-offset*1000;
+}
+function isoPlusDays(iso,days){
+  const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);
+}
+function modelHourValue(m,key,t){
+  const ix=m.data?.hourly?.time?.indexOf(t)??-1;
+  return ix>=0?m.data.hourly[key]?.[ix]:null;
+}
+function updateDayAtBoundary(){
+  if(!state.best)return;
+  const now=locationParts();
+  if(state.lastLocationDay!==now.date){state.lastLocationDay=now.date;loadWeather();return;}
+  if(state.lastConsensusHour!==now.hour){state.lastConsensusHour=now.hour;renderTodayConsensus();}
 }
 
 function modelEndpoints(){
@@ -110,7 +130,9 @@ function buildProbabilityConsensus(results, targetTimes){
   return {time:targetTimes, probability, probability_min, probability_max, probability_spread, source_count};
 }
 
+let weatherRequestId=0;
 async function loadWeather(){
+  const requestId=++weatherRequestId;
   document.body.classList.add('loading');
   $('locationName').textContent = state.location.isCurrent ? `CURRENT LOCATION (${state.location.name.split(',')[0].toUpperCase()})` : state.location.name.split(',')[0].toUpperCase();
   const endpointList = modelEndpoints();
@@ -125,11 +147,13 @@ async function loadWeather(){
       catch(e){ return {...m, ok:false, error:e.message}; }
     }))
   ]);
+  if(requestId!==weatherRequestId)return;
   state.models = results;
   state.probabilityModels = probabilityResults;
   const valid = results.filter(x=>x.ok && x.data?.hourly?.time?.length);
   if(!valid.length){ renderOffline(results); document.body.classList.remove('loading'); return; }
   state.best = valid[0].data;
+  state.lastLocationDay=locationParts().date;
   state.consensus = buildConsensus(valid.map(x=>x.data));
   state.probabilityConsensus = buildProbabilityConsensus(probabilityResults, state.consensus.hourly.time);
   renderWeather();
@@ -137,31 +161,39 @@ async function loadWeather(){
 }
 
 function buildConsensus(datas){
-  const times = datas[0].hourly.time;
-  const hourly = { time:times, temperature_2m:[], apparent_temperature:[], relative_humidity_2m:[], precipitation:[], weather_code:[], wind_speed_10m:[], wind_direction_10m:[], temp_spread:[], precip_agreement:[], precip_spread:[], precip_min:[], precip_max:[], precip_model_count:[] };
-  for(let i=0;i<times.length;i++){
-    const vals = key => datas.map(d=>d.hourly[key]?.[i]).filter(Number.isFinite);
-    const temps=vals('temperature_2m'), rains=vals('precipitation');
-    hourly.temperature_2m.push(avg(temps));
-    hourly.apparent_temperature.push(avg(vals('apparent_temperature')));
-    hourly.relative_humidity_2m.push(avg(vals('relative_humidity_2m')));
-    hourly.precipitation.push(avg(rains));
-    hourly.weather_code.push(Math.round(avg(vals('weather_code')) || 0));
-    hourly.wind_speed_10m.push(avg(vals('wind_speed_10m')));
-    const dirs = vals('wind_direction_10m');
-    if(dirs.length){ const s=avg(dirs.map(d=>Math.sin(d*Math.PI/180))), c=avg(dirs.map(d=>Math.cos(d*Math.PI/180))); hourly.wind_direction_10m.push((Math.atan2(s,c)*180/Math.PI+360)%360); } else hourly.wind_direction_10m.push(null);
-    hourly.temp_spread.push(sd(temps));
-    hourly.precip_agreement.push(rains.length ? rains.filter(v=>v>=0.1).length/rains.length : 0);
-    hourly.precip_spread.push(sd(rains));
-    hourly.precip_min.push(rains.length ? Math.min(...rains) : null);
-    hourly.precip_max.push(rains.length ? Math.max(...rains) : null);
+  const times=datas[0].hourly.time;
+  const maps=datas.map(d=>new Map(d.hourly.time.map((t,i)=>[t,i])));
+  const keys=['temperature_2m','apparent_temperature','relative_humidity_2m','precipitation','weather_code','wind_speed_10m','wind_direction_10m'];
+  const hourly={time:times,temp_spread:[],precip_agreement:[],precip_spread:[],precip_min:[],precip_max:[],precip_model_count:[]};
+  for(const k of keys)hourly[k]=[];
+  for(const t of times){
+    const vals=k=>datas.map((d,j)=>{const i=maps[j].get(t);return i===undefined?null:d.hourly[k]?.[i]}).filter(Number.isFinite);
+    const temps=vals('temperature_2m'),rains=vals('precipitation');
+    for(const k of keys){
+      if(k==='weather_code'){
+        const codes=vals(k),counts={};codes.forEach(c=>{const f=conditionFamily(c);counts[f]=(counts[f]||0)+1});
+        const family=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+        hourly[k].push(family?familyCode(family):null);
+      }else if(k==='wind_direction_10m'){
+        const dirs=vals(k);hourly[k].push(dirs.length?(Math.atan2(avg(dirs.map(x=>Math.sin(x*Math.PI/180))),avg(dirs.map(x=>Math.cos(x*Math.PI/180))))*180/Math.PI+360)%360:null);
+      }else hourly[k].push(avg(vals(k)));
+    }
+    hourly.temp_spread.push(temps.length>1?sd(temps):null);
+    hourly.precip_agreement.push(rains.length?rains.filter(v=>v>=.1).length/rains.length:null);
+    hourly.precip_spread.push(rains.length>1?sd(rains):null);
+    hourly.precip_min.push(rains.length?Math.min(...rains):null);
+    hourly.precip_max.push(rains.length?Math.max(...rains):null);
     hourly.precip_model_count.push(rains.length);
   }
-  const daily = datas[0].daily;
-  return {hourly,daily};
+  return {hourly,daily:datas[0].daily};
 }
 
-function currentIndex(times){ const now=Date.now(); let best=0, dist=Infinity; times.forEach((t,i)=>{const d=Math.abs(new Date(t).getTime()-now);if(d<dist){dist=d;best=i;}}); return best; }
+function currentIndex(times){
+  const now=Date.now();let best=0,dist=Infinity;
+  times.forEach((t,i)=>{const diff=Math.abs(apiHourEpoch(t)-now);if(diff<dist){dist=diff;best=i;}});
+  return best;
+}
+
 function confidenceLabel(spread){ if(spread == null) return 'Unavailable'; if(spread < .7) return 'High confidence'; if(spread < 1.5) return 'Moderate confidence'; return 'Low confidence'; }
 
 function renderWeather(){
@@ -188,6 +220,7 @@ function renderWeather(){
   $('updatedText').textContent=`Updated ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
   renderHourly(c,b,i); renderDaily(b); renderModels(i); renderRainModels(i); renderMapForecast(i);
   state.lastRefreshAt=Date.now();
+  state.lastConsensusHour=locationParts().hour;
 }
 
 
@@ -196,10 +229,10 @@ function renderMapForecast(start){
   const c=state.consensus; el.innerHTML='';
   for(let n=0;n<6 && start+n<c.hourly.time.length;n++){
     const i=start+n, chip=document.createElement('div'); chip.className='forecast-chip';
-    const dt=new Date(c.hourly.time[i]);
+    const dt=new Date(apiHourEpoch(c.hourly.time[i]));
     const pop=state.probabilityConsensus?.probability?.[i];
     const min=round(c.hourly.precip_min[i],1), max=round(c.hourly.precip_max[i],1);
-    chip.innerHTML=`<span>${n===0?'NOW':dt.toLocaleTimeString([], {hour:'2-digit'})}</span><strong>${Number.isFinite(pop)?Math.round(pop)+'%':'--'}</strong><small>${round(c.hourly.precipitation[i],1) ?? 0} mm · ${min ?? 0}–${max ?? 0} mm</small>`;
+    chip.innerHTML=`<span>${n===0?'NOW':c.hourly.time[i].slice(11,16)}</span><strong>${Number.isFinite(pop)?Math.round(pop)+'%':'--'}</strong><small>${round(c.hourly.precipitation[i],1) ?? 0} mm · ${min ?? 0}–${max ?? 0} mm</small>`;
     chip.onclick=()=>renderRainModels(i,true);
     el.appendChild(chip);
   }
@@ -209,8 +242,8 @@ function renderHourly(c,b,start){
   $('hourlyScroller').innerHTML='';
   for(let n=0;n<24 && start+n<c.hourly.time.length;n++){
     const i=start+n, card=document.createElement('div'); card.className='hour-card'+(n===0?' now':'');
-    const dt=new Date(c.hourly.time[i]); const code=b.hourly.weather_code?.[i] ?? c.hourly.weather_code[i];
-    card.innerHTML=`<div class="hour-time">${n===0?'NOW':dt.toLocaleTimeString([], {hour:'2-digit'})}</div><div class="hour-icon">${weatherGlyph(code,isNightTime(c.hourly.time[i]))}</div><div class="hour-temp">${fmtTemp(c.hourly.temperature_2m[i])}</div><div class="hour-rain">${Number.isFinite(state.probabilityConsensus?.probability?.[i])?Math.round(state.probabilityConsensus.probability[i])+'% rain':'--'}</div>`;
+    const dt=new Date(apiHourEpoch(c.hourly.time[i])); const code=b.hourly.weather_code?.[i] ?? c.hourly.weather_code[i];
+    card.innerHTML=`<div class="hour-time">${n===0?'NOW':c.hourly.time[i].slice(11,16)}</div><div class="hour-icon">${weatherGlyph(code,isNightTime(c.hourly.time[i]))}</div><div class="hour-temp">${fmtTemp(c.hourly.temperature_2m[i])}</div><div class="hour-rain">${Number.isFinite(state.probabilityConsensus?.probability?.[i])?Math.round(state.probabilityConsensus.probability[i])+'% rain':'--'}</div>`;
     $('hourlyScroller').appendChild(card);
   }
 }
@@ -233,8 +266,7 @@ function dailyConsensusAt(date){
   const counts=fams.reduce((a,f)=>(a[f]=(a[f]||0)+1,a),{});
   const dominant=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0] || ['cloud',0];
   const maxs=entries.map(e=>e.max).filter(Number.isFinite), mins=entries.map(e=>e.min).filter(Number.isFinite);
-  const tempRange=[...maxs,...mins];
-  const tempSpread=tempRange.length>1 ? Math.max(...maxs)-Math.min(...maxs) : 0;
+  const tempSpread=maxs.length>1 ? Math.max(...maxs)-Math.min(...maxs) : null;
 
   // For each ensemble system, use that system's maximum hourly PoP for the calendar day.
   // Then combine systems equally; raw ensemble member counts never appear in the UI.
@@ -246,19 +278,19 @@ function dailyConsensusAt(date){
   const popSpread=pops.length>1?Math.max(...pops)-Math.min(...pops):0;
   const conditionAgreement=entries.length?dominant[1]/entries.length:.5;
   const rainAgreement=pops.length>1?Math.max(.25,1-popSpread/100):.55;
-  const tempAgreement=Math.max(.25,1-Math.min(tempSpread,8)/8);
+  const tempAgreement=Math.max(.25,1-Math.min(tempSpread??8,8)/8);
   const score=.50*conditionAgreement+.30*rainAgreement+.20*tempAgreement;
-  const label=score>=.82?'Very high':score>=.68?'High':score>=.48?'Mixed':'Low';
+  const label=entries.length<2?'Unavailable':score>=.82?'Very high':score>=.68?'High':score>=.48?'Mixed':'Low';
   return {entries, dominant:dominant[0], code:familyCode(dominant[0]), max:avg(maxs), min:avg(mins),
           pop, label, score, systemsAgree:dominant[1], systemsTotal:entries.length, tempSpread};
 }
 
 function rollingDailyDates(){
-  const dates=state.best?.daily?.time || [];
-  if(!dates.length) return [];
-  // Open-Meteo daily arrays begin at "today" in the selected location's timezone.
-  return dates.slice(0,7);
+  const today=locationParts().date;
+  const available=new Set(state.best?.daily?.time||[]);
+  return Array.from({length:7},(_,i)=>isoPlusDays(today,i)).filter(d=>available.has(d));
 }
+
 function todayConsensusSummary(date){
   const d=dailyConsensusAt(date);
   const models=state.models.filter(m=>m.ok && m.data?.hourly?.time);
@@ -293,27 +325,21 @@ function todayConsensusSummary(date){
   if(Number.isFinite(d.pop)){
     detail += d.pop<10?' Little to no rain is expected.'
       : d.pop<30?' Rain is unlikely.'
-      : d.pop<60?' There is a meaningful chance of rain.'
-      : ' Rain is a significant possibility.';
+      : d.pop<60?' Some hours have a meaningful rain chance.'
+      : ' Rain is possible during parts of the day.';
   }
   return {...d,headline,detail};
 }
 
-function selectedLocationNow(){
-  const offset=Number(state.best?.utc_offset_seconds||0);
-  return new Date(Date.now()+offset*1000);
-}
+function selectedLocationNow(){return locationParts();}
+
 function topConsensusDate(){
-  const dates=rollingDailyDates();
-  if(!dates.length) return null;
-  const local=selectedLocationNow();
-  const hour=local.getUTCHours();
-  return (hour>=22 && dates[1]) ? dates[1] : dates[0];
+  const days=rollingDailyDates();if(!days.length)return null;
+  const target=locationParts().hour>=22?isoPlusDays(locationParts().date,1):locationParts().date;
+  return days.includes(target)?target:days[0];
 }
-function topConsensusIsTomorrow(){
-  const dates=rollingDailyDates(), chosen=topConsensusDate();
-  return dates.length>1 && chosen===dates[1];
-}
+
+function topConsensusIsTomorrow(){return topConsensusDate()===isoPlusDays(locationParts().date,1);}
 
 function renderTodayConsensus(){
   const date=topConsensusDate();
@@ -334,7 +360,7 @@ function renderTodayConsensus(){
     <p>${detail}</p>
     <div class="today-consensus-meta">
       <span>High ${fmtTemp(x.max)}</span><span>Low ${fmtTemp(x.min)}</span>
-      <span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'Rain --'}</span>
+      <span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% peak rain':'Rain --'}</span>
     </div>`;
 }
 
@@ -342,11 +368,11 @@ function renderDaily(b){
   $('dailyList').innerHTML='';
   rollingDailyDates().forEach((t,i)=>{
     const x=dailyConsensusAt(t), row=document.createElement('button'); row.className='daily-row';
-    const d=new Date(`${t}T12:00:00`);
+    const d=new Date(`${t}T12:00:00Z`);
     const agreement=x.systemsTotal ? `${x.systemsAgree}/${x.systemsTotal} systems agree` : 'Consensus unavailable';
-    row.innerHTML=`<span class="daily-day">${i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString([], {weekday:'short'})}</span>
+    row.innerHTML=`<span class="daily-day">${i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString('en-GB', {weekday:'short',timeZone:'UTC'})}</span>
       <span class="daily-icon">${weatherGlyph(x.code)}</span>
-      <span class="daily-rain">${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain':'--'}</span>
+      <span class="daily-rain">${Number.isFinite(x.pop)?Math.round(x.pop)+'% peak rain':'--'}</span>
       <strong class="daily-temp">${fmtTemp(x.max)} / ${fmtTemp(x.min)}</strong>
       <span class="daily-confidence"><b>${x.label} consensus</b><small>${agreement}</small></span>`;
     row.onclick=()=>showDailyConsensus(t,x);
@@ -356,16 +382,16 @@ function renderDaily(b){
 }
 function showDailyConsensus(date,x){
   const dlg=$('dailyDialog'), d=new Date(`${date}T12:00:00`);
-  $('dailyDialogTitle').textContent=d.toLocaleDateString([], {weekday:'long',month:'short',day:'numeric'});
-  $('dailyDialogSummary').innerHTML=`<strong>${x.label} consensus</strong><span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% rain probability':'Rain probability unavailable'} · temperature spread ${round(x.tempSpread,1)}°</span>`;
+  $('dailyDialogTitle').textContent=d.toLocaleDateString('en-GB', {weekday:'long',month:'short',day:'numeric',timeZone:'UTC'});
+  $('dailyDialogSummary').innerHTML=`<strong>${x.label} consensus</strong><span>${Number.isFinite(x.pop)?Math.round(x.pop)+'% peak hourly rain chance':'Rain probability unavailable'} · temperature spread ${round(x.tempSpread,1)}°</span>`;
   $('dailyModelRows').innerHTML='';
   x.entries.forEach(e=>{const r=document.createElement('div');r.className='model-row';r.innerHTML=`<span><strong>${e.name}</strong><small class="model-status">${weatherText(e.code)}</small></span><strong>${fmtTemp(e.max)} / ${fmtTemp(e.min)}</strong>`;$('dailyModelRows').appendChild(r);});
   dlg.showModal();
 }
 function renderRainModels(i, open=false){
   const c=state.consensus; if(!c) return;
-  const dt=new Date(c.hourly.time[i]);
-  const amountVals=state.models.filter(m=>m.ok).map(m=>({name:m.name,value:m.data.hourly.precipitation?.[i]})).filter(x=>Number.isFinite(x.value));
+  const dt=new Date(apiHourEpoch(c.hourly.time[i]));
+  const amountVals=state.models.filter(m=>m.ok).map(m=>({name:m.name,value:modelHourValue(m,'precipitation',c.hourly.time[i])})).filter(x=>Number.isFinite(x.value));
   const p=state.probabilityConsensus;
   const pop=p?.probability?.[i];
   const popMin=p?.probability_min?.[i];
@@ -374,7 +400,7 @@ function renderRainModels(i, open=false){
   const meanAmount=round(c.hourly.precipitation[i],1);
   const amountMin=round(c.hourly.precip_min[i],1);
   const amountMax=round(c.hourly.precip_max[i],1);
-  $('rainDialogTitle').textContent=`${dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} forecast`;
+  $('rainDialogTitle').textContent=`${c.hourly.time[i].slice(11,16)} forecast`;
   $('rainConsensusSummary').innerHTML=`<div><span class="eyebrow">PROBABILITY</span><strong>${Number.isFinite(pop)?Math.round(pop)+'%':'--'}</strong></div><div><span class="eyebrow">ENSEMBLE RANGE</span><strong>${Number.isFinite(popMin)?Math.round(popMin):'--'}–${Number.isFinite(popMax)?Math.round(popMax):'--'}%</strong></div><div><span class="eyebrow">AMOUNT</span><strong>${meanAmount ?? '--'} mm</strong></div>`;
   $('rainModelRows').innerHTML='';
 
@@ -390,7 +416,7 @@ function renderRainModels(i, open=false){
   const amountHead=document.createElement('div'); amountHead.className='dialog-section-label eyebrow'; amountHead.textContent='DETERMINISTIC AMOUNT FORECASTS'; $('rainModelRows').appendChild(amountHead);
   state.models.forEach(m=>{
     const r=document.createElement('div'); r.className='model-row';
-    const v=m.ok?m.data.hourly.precipitation?.[i]:null;
+    const v=m.ok?modelHourValue(m,'precipitation',c.hourly.time[i]):null;
     r.innerHTML=`<div><strong>${m.name}</strong><div class="model-wet">${Number.isFinite(v)&&v>=0.1?'WET SIGNAL':Number.isFinite(v)?'DRY SIGNAL':'UNAVAILABLE'}</div></div><div class="rain-model-amount">${Number.isFinite(v)?`${round(v,1)} mm`:'—'}</div>`;
     $('rainModelRows').appendChild(r);
   });
@@ -399,7 +425,7 @@ function renderRainModels(i, open=false){
 }
 
 function renderModels(i){
-  $('modelRows').innerHTML=''; state.models.forEach(m=>{const r=document.createElement('div');r.className='model-row';const v=m.ok?m.data.hourly.temperature_2m?.[i]:null;r.innerHTML=`<div><strong>${m.name}</strong><div class="model-status">${m.ok?'Available':'Unavailable this refresh'}</div></div><div>${m.ok?fmtTemp(v):'—'}</div>`;$('modelRows').appendChild(r);});
+  $('modelRows').innerHTML=''; state.models.forEach(m=>{const r=document.createElement('div');r.className='model-row';const v=m.ok?modelHourValue(m,'temperature_2m',state.consensus.hourly.time[i]):null;r.innerHTML=`<div><strong>${m.name}</strong><div class="model-status">${m.ok?'Available':'Unavailable this refresh'}</div></div><div>${m.ok?fmtTemp(v):'—'}</div>`;$('modelRows').appendChild(r);});
 }
 function renderOffline(results){$('conditionText').textContent='Weather data unavailable';$('updatedText').textContent='Check your connection';$('modelRows').innerHTML=results.map(m=>`<div class="model-row"><strong>${m.name}</strong><span>Unavailable</span></div>`).join('');}
 
@@ -407,7 +433,6 @@ async function useCurrentLocation(){
   if(!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(async pos=>{
     const {latitude,longitude}=pos.coords; let name='Current location';
-    try{const g=await fetchJson(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`);name=g.results?.[0]?.name||name;}catch{}
     const city=await reverseGeocodeCity(latitude,longitude); state.location={name:city,latitude,longitude,isCurrent:true}; localStorage.setItem('weather-location',JSON.stringify(state.location)); loadWeather(); if(state.map) state.map.setView([latitude,longitude],8);
   },()=>{}, {enableHighAccuracy:true,timeout:8000});
 }
@@ -499,12 +524,13 @@ $('unitSelect').onchange=e=>{state.units=e.target.value;localStorage.setItem('we
 $('windSelect').onchange=e=>{state.wind=e.target.value;localStorage.setItem('weather-wind',state.wind);loadWeather();};
 
 function refreshOnOpen(){
-  if(Date.now()-state.lastRefreshAt<2000) return;
+  if(Date.now()-state.lastRefreshAt<60000){updateDayAtBoundary();return;}
   loadWeather();
   if(state.map && document.getElementById('mapView').classList.contains('active')) loadRadar();
 }
 window.addEventListener('pageshow',refreshOnOpen);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshOnOpen();});
 window.addEventListener('focus',refreshOnOpen);
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=9',{updateViaCache:'none'}).catch(()=>{}));
+setInterval(updateDayAtBoundary,60000);
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=10',{updateViaCache:'none'}).catch(()=>{}));
 loadWeather();
