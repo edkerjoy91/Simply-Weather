@@ -1,5 +1,5 @@
-const CACHE='simply-weather-v10';
-const SHELL=['./','./index.html','./styles.css?v=10','./app.js?v=10','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='simply-weather-v11';
+const SHELL=['./','./index.html','./styles.css?v=11','./app.js?v=11','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('weather-')||key.startsWith('simply-weather-'))if(key!==CACHE)await caches.delete(key);await self.clients.claim();})());});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;event.respondWith((async()=>{const cache=await caches.open(CACHE);try{const response=await fetch(event.request,{cache:'no-store'});if(response.ok)await cache.put(event.request,response.clone());return response;}catch(e){return (await cache.match(event.request))||(await cache.match('./index.html'))||Response.error();}})());});
